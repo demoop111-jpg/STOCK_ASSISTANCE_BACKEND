@@ -6,6 +6,8 @@ import { connectDB } from './config/db.js';
 import chatRoutes from './routes/chat.routes.js';
 import orderRoutes from './routes/order.routes.js';
 import adminRoutes from './routes/admin.routes.js';
+import authRoutes from './routes/auth.routes.js';
+import userRoutes from './routes/user.routes.js';
 
 dotenv.config();
 
@@ -37,8 +39,10 @@ app.get('/api/health', (req, res) => {
   res.json({ success: true, service: 'tally-chat-backend', time: new Date().toISOString() });
 });
 
+app.use('/api/auth', authRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/admin/users', userRoutes);
 app.use('/api/admin', adminRoutes);
 
 app.use((req, res) => {

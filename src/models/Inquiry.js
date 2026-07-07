@@ -3,11 +3,17 @@ import mongoose from 'mongoose';
 const InquirySchema = new mongoose.Schema(
   {
     sessionId: { type: String, default: '', index: true },
+
+    clientId: { type: String, default: '', index: true },
+    clientName: { type: String, default: '', index: true },
+    clientUsername: { type: String, default: '', index: true },
+
     companyName: { type: String, default: '', index: true },
     categoryName: { type: String, default: '', index: true },
     productCode: { type: String, required: true, index: true },
     normalizedCode: { type: String, required: true, index: true },
 
+    inquiryType: { type: String, default: 'fast_check', index: true },
     itemFound: { type: Boolean, default: false },
     requestedQty: { type: Number, default: null },
     requestedUnit: { type: String, enum: ['PCS', 'BOX', ''], default: '' },
@@ -25,7 +31,8 @@ const InquirySchema = new mongoose.Schema(
     source: { type: String, default: 'chat_frontend' },
     ip: { type: String, default: '' },
     userAgent: { type: String, default: '' },
-    inquiryDate: { type: Date, default: Date.now, index: true }
+    inquiryDate: { type: Date, default: Date.now, index: true },
+    inquiryDateIST: { type: String, default: '' }
   },
   { timestamps: true, collection: 'inquiries' }
 );

@@ -4,6 +4,8 @@ import StockBatch from '../models/StockBatch.js';
 import Inquiry from '../models/Inquiry.js';
 import { normalizeCode, normalizeSearchCode } from '../utils/normalize.js';
 import { buildAvailabilityMessage, calculateRequiredPcs } from '../utils/stockRules.js';
+import { requireAuth } from '../middleware/auth.js';
+import { getIndianDateTime } from '../utils/auth.js';
 import {
   PRODUCT_CATEGORIES,
   getCategoryById,
@@ -17,10 +19,16 @@ import {
 const router = express.Router();
 
 function requestMeta(req) {
+  const now = new Date();
   return {
     sessionId: String(req.body.sessionId || req.headers['x-session-id'] || ''),
+    clientId: req.user?.id || '',
+    clientName: req.user?.name || '',
+    clientUsername: req.user?.username || '',
     ip: req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '',
-    userAgent: req.headers['user-agent'] || ''
+    userAgent: req.headers['user-agent'] || '',
+    inquiryDate: now,
+    inquiryDateIST: getIndianDateTime(now)
   };
 }
 
@@ -160,6 +168,8 @@ router.get('/bulk-catalog', async (req, res) => {
   }
 });
 
+router.use(requireAuth);
+
 router.post('/search-items', async (req, res) => {
   try {
     const category = getCategoryById(req.body.categoryId) || getCategoryByName(req.body.categoryName);
@@ -204,6 +214,7 @@ router.post('/check-stock', async (req, res) => {
         normalizedCode: productCode,
         itemFound: false,
         available: false,
+        inquiryType: 'fast_check',
         stockStatus: 'Item Not Found',
         responseMessage: 'Item Not Found'
       });
@@ -227,6 +238,22 @@ router.post('/check-stock', async (req, res) => {
     }));
 
     variants.sort(sortVariants);
+
+    await logInquiry({
+      ...requestMeta(req),
+      inquiryType: variants.length > 1 ? 'fast_check_variant_selection' : 'fast_check',
+      companyName: variants[0]?.companyName || filter.companyName || '',
+      categoryName: variants[0]?.categoryName || filter.categoryName || '',
+      productCode,
+      normalizedCode: productCode,
+      itemFound: true,
+      available: variants.some((item) => Number(item.stockQty || 0) > 0),
+      stockQty: variants.reduce((sum, item) => sum + Number(item.stockQty || 0), 0),
+      stockUnit: variants[0]?.stockUnit || 'NOS',
+      quantityText: variants.length > 1 ? `${variants.length} matching variants` : variants[0]?.quantityText || '',
+      stockStatus: variants.some((item) => Number(item.stockQty || 0) > 0) ? 'In Stock' : 'Out of Stock',
+      responseMessage: variants.length > 1 ? 'Multiple variants found' : 'Item found'
+    });
 
     if (variants.length > 1) {
       return res.json({
@@ -319,6 +346,7 @@ router.post('/check-availability', async (req, res) => {
         ...requestMeta(req),
         productCode,
         normalizedCode: productCode,
+        inquiryType: 'availability_check',
         itemFound: false,
         requestedQty: calculation.requestedQty,
         requestedUnit: calculation.requestedUnit,
@@ -348,6 +376,7 @@ router.post('/check-availability', async (req, res) => {
       categoryName: item.categoryName || '',
       productCode: item.productCode,
       normalizedCode: item.normalizedCode,
+      inquiryType: 'availability_check',
       itemFound: true,
       requestedQty: calculation.requestedQty,
       requestedUnit: calculation.requestedUnit,
@@ -445,6 +474,26 @@ router.post('/check-bulk-stock', async (req, res) => {
 
     const availableItems = results.filter((item) => item.available);
     const notAvailableItems = results.filter((item) => !item.available);
+
+    await Promise.all(results.map((item) => logInquiry({
+      ...requestMeta(req),
+      inquiryType: 'bulk_check',
+      source: 'bulk_order_frontend',
+      companyName: item.companyName || '',
+      categoryName: item.categoryName || '',
+      productCode: item.productCode || item.displayCode || '',
+      normalizedCode: item.normalizedCode || normalizeCode(item.productCode || item.displayCode || ''),
+      itemFound: item.found !== false,
+      requestedQty: Number(item.requestedQty || 0),
+      requestedUnit: 'PCS',
+      requestedPcs: Number(item.requestedQty || 0),
+      stockQty: Number(item.stockQty || 0),
+      stockUnit: item.stockUnit || 'PCS',
+      quantityText: item.quantityText || '',
+      available: Boolean(item.available),
+      stockStatus: item.available ? 'Available' : (Number(item.stockQty || 0) > 0 ? 'Short Stock' : 'Unavailable'),
+      responseMessage: item.message || ''
+    })));
 
     res.json({
       success: true,
