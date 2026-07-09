@@ -26,6 +26,7 @@ const OrderSchema = new mongoose.Schema(
     clientId: { type: String, default: '', index: true },
     clientName: { type: String, default: '', index: true },
     clientUsername: { type: String, default: '', index: true },
+    salesPersonMobile: { type: String, default: '', index: true },
 
     productCode: { type: String, required: true, index: true },
     requestedQty: { type: Number, required: true },

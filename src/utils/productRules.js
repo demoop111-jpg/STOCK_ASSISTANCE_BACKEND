@@ -62,11 +62,15 @@ export function displayItemCode(productCode = '', categoryName = '') {
 
   if (!raw) return '';
 
+
   if (cat === 'LOUVERS') {
-    const match = raw.match(/^(L\d{2}\s*[- ]\s*[A-Z]+\s*[- ]\s*\d+)/i)
-      || raw.match(/^(LS\d{2}\s*[- ]\s*[A-Z]+\s*[- ]\s*\d+)/i)
-      || raw.match(/^(H\d{2}\s*[- ]\s*[A-Z]+\s*[- ]\s*\d+)/i)
-      || raw.match(/^(\d{4})/);
+    const match =
+      raw.match(/^(ON\d{2}\s*[- ]\s*[A-Z]+\s*[- ]\s*\d+(?:\s*[- ]\s*\d+)*)/i) ||
+      raw.match(/^(LS\d{2}\s*[- ]\s*[A-Z]+\s*[- ]\s*\d+(?:\s*[- ]\s*\d+)*)/i) ||
+      raw.match(/^(H\d{2}\s*[- ]\s*[A-Z]+\s*[- ]\s*\d+(?:\s*[- ]\s*\d+)*)/i) ||
+      raw.match(/^(L\d{2}\s*[- ]\s*[A-Z]+\s*[- ]\s*\d+(?:\s*[- ]\s*\d+)*)/i) ||
+      raw.match(/^(\d{4})/);
+
     return match ? match[1].replace(/\s*[- ]\s*/g, '-') : raw.split(' ')[0];
   }
 
@@ -107,10 +111,9 @@ export function itemGroupKey(productCode = '', categoryName = '') {
   const cat = String(categoryName || '').trim().toUpperCase();
 
   if (cat === 'LOUVERS') {
-    const match = display.match(/^(L\d{2}|LS\d{2}|H\d{2}|\d{4})/i);
+    const match = display.match(/^(ON\d{2}|LS\d{2}|H\d{2}|L\d{2}|\d{4})/i);
     return match ? match[1].toUpperCase() : 'OTHER';
   }
-
   if (cat === 'ASA SHEET') {
     if (normalized.startsWith('OSAG')) return 'OSAG';
     if (normalized.startsWith('OSAM')) return 'OSAM';

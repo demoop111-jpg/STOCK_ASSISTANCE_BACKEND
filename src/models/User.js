@@ -13,6 +13,7 @@ const UserSchema = new mongoose.Schema(
     },
     passwordHash: { type: String, required: true },
     passwordSalt: { type: String, required: true },
+    salesPersonMobile: { type: String, default: '', trim: true },
     isActive: { type: Boolean, default: true, index: true },
     lastLoginAt: { type: Date, default: null },
     lastLoginAtIST: { type: String, default: '' }

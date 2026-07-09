@@ -1,10 +1,21 @@
+function formatWhatsAppNumber(value = '') {
+  const digits = String(value || '').replace(/\D/g, '');
+  if (digits.length === 10) return `91${digits}`;
+  return digits;
+}
+
+function defaultSalesperson() {
+  return formatWhatsAppNumber(process.env.SALESPERSON_WHATSAPP || '919999999999');
+}
+
 export function buildSalespersonWhatsAppLink(order) {
-  const salesperson = process.env.SALESPERSON_WHATSAPP || '919999999999';
+  const salesperson = formatWhatsAppNumber(order.salesPersonMobile) || defaultSalesperson();
   const text = [
     'New Booking Request',
     '',
     `Order ID: ${order.orderRequestId}`,
     '',
+    `Client: ${order.clientName || 'Client'}`,
     `Customer: ${order.customerName}`,
     `Mobile: ${order.mobile}`,
     `City: ${order.city}`,

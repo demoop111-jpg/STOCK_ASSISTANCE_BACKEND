@@ -2,6 +2,7 @@ import express from 'express';
 import User from '../models/User.js';
 import { requireAdminKey } from '../middleware/auth.js';
 import { hashPassword, safeUser } from '../utils/auth.js';
+import { cleanMobile, isValidMobile } from '../utils/normalize.js';
 
 const router = express.Router();
 router.use(requireAdminKey);
@@ -15,6 +16,7 @@ function userResponse(user) {
     id: String(user._id),
     name: user.name,
     username: user.username,
+    salesPersonMobile: user.salesPersonMobile || '',
     isActive: user.isActive !== false,
     lastLoginAt: user.lastLoginAt || null,
     lastLoginAtIST: user.lastLoginAtIST || '',
@@ -33,6 +35,7 @@ router.post('/', async (req, res) => {
     const name = String(req.body.name || '').trim();
     const username = cleanUsername(req.body.username);
     const password = String(req.body.password || '');
+    const salesPersonMobile = cleanMobile(req.body.salesPersonMobile || '');
 
     if (name.length < 2) {
       return res.status(400).json({ success: false, message: 'Client name is required' });
@@ -43,9 +46,12 @@ router.post('/', async (req, res) => {
     if (password.length < 6) {
       return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
     }
+    if (salesPersonMobile && !isValidMobile(salesPersonMobile)) {
+      return res.status(400).json({ success: false, message: 'Valid sales person mobile number is required' });
+    }
 
     const passwordData = hashPassword(password);
-    const user = await User.create({ name, username, ...passwordData, isActive: req.body.isActive !== false });
+    const user = await User.create({ name, username, salesPersonMobile, ...passwordData, isActive: req.body.isActive !== false });
     res.status(201).json({ success: true, user: userResponse(user) });
   } catch (error) {
     const message = error.code === 11000 ? 'Username already exists' : error.message;
@@ -58,6 +64,13 @@ router.put('/:id', async (req, res) => {
     const update = {};
     if (req.body.name !== undefined) update.name = String(req.body.name || '').trim();
     if (req.body.username !== undefined) update.username = cleanUsername(req.body.username);
+    if (req.body.salesPersonMobile !== undefined) {
+      const salesPersonMobile = cleanMobile(req.body.salesPersonMobile || '');
+      if (salesPersonMobile && !isValidMobile(salesPersonMobile)) {
+        return res.status(400).json({ success: false, message: 'Valid sales person mobile number is required' });
+      }
+      update.salesPersonMobile = salesPersonMobile;
+    }
     if (req.body.isActive !== undefined) update.isActive = Boolean(req.body.isActive);
 
     if (req.body.password) {

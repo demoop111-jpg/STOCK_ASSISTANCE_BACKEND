@@ -25,15 +25,27 @@ function clientFields(req) {
   return {
     clientId: req.user?.id || '',
     clientName: req.user?.name || '',
-    clientUsername: req.user?.username || ''
+    clientUsername: req.user?.username || '',
+    salesPersonMobile: req.user?.salesPersonMobile || ''
   };
 }
 
-function whatsappNumber() {
-  return process.env.SALESPERSON_WHATSAPP || process.env.HELPDESK_WHATSAPP || '917623853955';
+function formatWhatsAppNumber(value = '') {
+  const digits = String(value || '').replace(/\D/g, '');
+  if (digits.length === 10) return `91${digits}`;
+  return digits;
 }
 
-function buildBulkWhatsApp({ orderRequestId, clientName, transportName, items = [], orderDateIST = '' }) {
+function whatsappNumber(salesPersonMobile = '') {
+  return (
+    formatWhatsAppNumber(salesPersonMobile) ||
+    formatWhatsAppNumber(process.env.SALESPERSON_WHATSAPP) ||
+    formatWhatsAppNumber(process.env.HELPDESK_WHATSAPP) ||
+    '917623853955'
+  );
+}
+
+function buildBulkWhatsApp({ orderRequestId, clientName, transportName, items = [], orderDateIST = '', salesPersonMobile = '' }) {
   const lines = [
     'New Bulk Order Request',
     '',
@@ -57,7 +69,7 @@ function buildBulkWhatsApp({ orderRequestId, clientName, transportName, items = 
   const whatsappMessage = lines.join('\n');
   return {
     whatsappMessage,
-    whatsappLink: `https://wa.me/${whatsappNumber()}?text=${encodeURIComponent(whatsappMessage)}`
+    whatsappLink: `https://wa.me/${whatsappNumber(salesPersonMobile)}?text=${encodeURIComponent(whatsappMessage)}`
   };
 }
 
@@ -176,7 +188,8 @@ router.post('/bulk', async (req, res) => {
       clientName: client.clientName || 'Client',
       transportName,
       items,
-      orderDateIST
+      orderDateIST,
+      salesPersonMobile: client.salesPersonMobile
     });
 
     const totalQty = items.reduce((sum, item) => sum + Number(item.requestedQty || 0), 0);

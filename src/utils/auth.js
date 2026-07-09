@@ -32,6 +32,7 @@ export function signToken(user = {}) {
     sub: String(user._id || user.id || ''),
     name: user.name || '',
     username: user.username || '',
+    salesPersonMobile: user.salesPersonMobile || '',
     iat: Math.floor(Date.now() / 1000),
     exp: Math.floor(Date.now() / 1000) + TOKEN_TTL_SECONDS
   };
@@ -80,6 +81,7 @@ export function safeUser(user = {}) {
   return {
     id: String(user._id || user.id || user.sub || ''),
     name: user.name || '',
-    username: user.username || ''
+    username: user.username || '',
+    salesPersonMobile: user.salesPersonMobile || ''
   };
 }
