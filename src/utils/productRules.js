@@ -4,21 +4,21 @@ export const PRODUCT_CATEGORIES = [
   {
     id: 'louvers',
     label: 'Louvers',
-    companyName: 'Orange Profile',
+    companyName: 'Orange Profile (26-27)',
     categoryName: 'Louvers',
     hasBatches: true
   },
   {
     id: 'paintable',
     label: 'Paintable',
-    companyName: 'Orange Profile',
+    companyName: 'Orange Profile (26-27)',
     categoryName: 'Paintable',
     hasBatches: false
   },
   {
     id: 'asa_sheet',
     label: 'ASA Sheet',
-    companyName: 'Orange Profile',
+    companyName: 'Orange Profile (26-27)',
     categoryName: 'ASA Sheet',
     hasBatches: false
   },

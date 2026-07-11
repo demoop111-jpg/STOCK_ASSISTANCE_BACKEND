@@ -297,8 +297,8 @@ router.post('/check-stock-batches', async (req, res) => {
 
     const batches = allBatches.filter((batch) => {
       return normalizeSearchCode(batch.productCode) === searchCode ||
-        normalizeSearchCode(batch.normalizedCode) === searchCode ||
-        normalizeSearchCode(batch.productCode).startsWith(searchCode);
+        normalizeSearchCode(batch.normalizedCode) === searchCode
+      // normalizeSearchCode(batch.productCode).startsWith(searchCode);
     });
 
     return res.json({
