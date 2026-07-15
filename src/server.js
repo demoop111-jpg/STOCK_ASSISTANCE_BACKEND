@@ -2,6 +2,7 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import express from 'express';
 import morgan from 'morgan';
+import mongoose from "mongoose";
 import { connectDB } from './config/db.js';
 import chatRoutes from './routes/chat.routes.js';
 import orderRoutes from './routes/order.routes.js';
@@ -37,6 +38,45 @@ app.use(morgan('dev'));
 
 app.get('/api/health', (req, res) => {
   res.json({ success: true, service: 'tally-chat-backend', time: new Date().toISOString() });
+});
+
+app.get("/api/export-inquiries", async (req, res) => {
+  try {
+    const inquiries = await mongoose.connection.db
+      .collection("inquiries")
+      .find({})
+      .sort({ createdAt: -1 })
+      .toArray();
+
+    const today = new Date().toISOString().slice(0, 10);
+    const fileName = `inquiries-${today}.json`;
+
+    res.setHeader("Content-Type", "application/json; charset=utf-8");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${fileName}"`
+    );
+
+    return res.status(200).send(
+      JSON.stringify(
+        {
+          success: true,
+          exportedAt: new Date().toISOString(),
+          totalRecords: inquiries.length,
+          data: inquiries,
+        },
+        null,
+        2
+      )
+    );
+  } catch (error) {
+    console.error("Export inquiries failed:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to export inquiries",
+    });
+  }
 });
 
 app.use('/api/auth', authRoutes);
