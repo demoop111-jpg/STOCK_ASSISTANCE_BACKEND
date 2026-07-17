@@ -438,7 +438,22 @@ router.post('/check-bulk-stock', async (req, res) => {
         categoryName: category.categoryName
       });
 
-      const item = matches[0];
+      // const item = matches[0];
+
+      const selectedSearchCode = normalizeSearchCode(
+        raw.normalizedCode || raw.productCode || raw.displayCode || productCode
+      );
+
+      const item =
+        matches.find((match) => {
+          return (
+            normalizeSearchCode(match.productCode) === selectedSearchCode ||
+            normalizeSearchCode(match.normalizedCode) === selectedSearchCode ||
+            normalizeSearchCode(match.tallyStockName || "") === selectedSearchCode
+          );
+        }) || matches[0];
+
+
 
       if (!item) {
         results.push({
@@ -463,6 +478,9 @@ router.post('/check-bulk-stock', async (req, res) => {
       results.push({
         ...payload,
         categoryId: category.id,
+        displayMeta:
+          raw.displayMeta ||
+          (category.id === "louvers" ? getVariantLabel(item.productCode) : ""),
         requestedQty,
         requestedUnit: 'PCS',
         available,
